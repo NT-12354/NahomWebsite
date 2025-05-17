@@ -62,9 +62,15 @@
                     <h3>Enhance Your Experience</h3>
                     <p>Listen to some ambient music while browsing the gallery:</p>
                     <audio controls loop>
-                        <source src="https://ia800209.us.archive.org/24/items/FreeMusicForFreeVideos/Ambient_Melodic.mp3" type="audio/mpeg">
+                        <source src="audio/ambient_melody.mp3" type="audio/mpeg">
                         Your browser does not support the audio element.
                     </audio>
+                    <div class="audio-selection">
+                        <p>Choose your audio experience:</p>
+                        <button onclick="document.querySelector('audio').src='audio/ambient_melody.mp3'">Ambient Melody</button>
+                        <button onclick="document.querySelector('audio').src='audio/nature_sounds.mp3'">Nature Sounds</button>
+                        <button onclick="document.querySelector('audio').src='audio/piano_relaxation.mp3'">Piano Relaxation</button>
+                    </div>
                 </div>
             </div>
         </section>

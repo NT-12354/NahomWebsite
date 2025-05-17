@@ -1,0 +1,13 @@
+Audio Files for Alex Morgan Photography Website
+
+1. ambient_melody.mp3 - A soft ambient piano track for gallery browsing
+2. nature_sounds.mp3 - Forest and water sounds for a natural ambiance
+3. piano_relaxation.mp3 - Gentle piano music for a relaxing browsing experience
+
+These audio files would typically be obtained from:
+- Original compositions by the photographer or a composer
+- Licensed music from royalty-free music sites (Artlist, Epidemic Sound, etc.)
+- Purchased music with appropriate licensing for web use
+
+For this website, we should use properly licensed audio files that match the elegant, 
+professional feel of the photography portfolio.

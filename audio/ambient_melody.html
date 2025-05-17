@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambient Melody Audio Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #b38c52;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ambient Melody Audio Generator</h1>
+    <p>This page uses the Web Audio API to generate calming ambient sounds for browsing the photography gallery.</p>
+    
+    <div class="controls">
+        <button id="startButton">Generate Audio</button>
+        <button id="stopButton" disabled>Stop Audio</button>
+        <button id="downloadButton" disabled>Download Audio</button>
+    </div>
+    
+    <p>Created for Alex Morgan Photography to enhance the gallery browsing experience.</p>
+    
+    <script>
+        // Web Audio API setup
+        let audioContext;
+        let oscillators = [];
+        let gainNodes = [];
+        let recorder;
+        let audioChunks = [];
+        
+        document.getElementById('startButton').addEventListener('click', startAudio);
+        document.getElementById('stopButton').addEventListener('click', stopAudio);
+        document.getElementById('downloadButton').addEventListener('click', downloadAudio);
+        
+        function startAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Create reverb
+            const convolver = audioContext.createConvolver();
+            createReverb(convolver, 2);
+            
+            // Create oscillators and connect them
+            createAmbientSound(convolver);
+            
+            // Setup recording
+            const destination = audioContext.createMediaStreamDestination();
+            recorder = new MediaRecorder(destination.stream);
+            
+            audioChunks = [];
+            recorder.ondataavailable = e => {
+                audioChunks.push(e.data);
+            };
+            
+            recorder.onstop = () => {
+                document.getElementById('downloadButton').disabled = false;
+            };
+            
+            // Connect nodes to the recording destination
+            gainNodes.forEach(gainNode => {
+                gainNode.connect(destination);
+            });
+            
+            recorder.start();
+            
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('stopButton').disabled = false;
+        }
+        
+        function stopAudio() {
+            // Stop oscillators
+            oscillators.forEach(osc => {
+                osc.stop();
+            });
+            
+            recorder.stop();
+            
+            document.getElementById('startButton').disabled = false;
+            document.getElementById('stopButton').disabled = true;
+        }
+        
+        function downloadAudio() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            const a = document.createElement('a');
+            a.href = audioUrl;
+            a.download = 'ambient_melody.webm';
+            a.click();
+            
+            URL.revokeObjectURL(audioUrl);
+        }
+        
+        function createReverb(convolverNode, duration) {
+            const sampleRate = audioContext.sampleRate;
+            const length = sampleRate * duration;
+            const impulse = audioContext.createBuffer(2, length, sampleRate);
+            
+            const leftChannel = impulse.getChannelData(0);
+            const rightChannel = impulse.getChannelData(1);
+            
+            for (let i = 0; i < length; i++) {
+                const n = i / length;
+                // Exponential decay for reverb
+                const decay = Math.exp(-10 * n);
+                
+                leftChannel[i] = (Math.random() * 2 - 1) * decay;
+                rightChannel[i] = (Math.random() * 2 - 1) * decay;
+            }
+            
+            convolverNode.buffer = impulse;
+        }
+        
+        function createAmbientSound(reverb) {
+            const masterGain = audioContext.createGain();
+            masterGain.gain.value = 0.3;
+            masterGain.connect(audioContext.destination);
+            
+            reverb.connect(masterGain);
+            
+            // Create base frequencies for a minor chord
+            const baseNotes = [220, 261.63, 329.63, 440, 523.25]; // A, C, E, A octave, C octave
+            
+            baseNotes.forEach(freq => {
+                createDrone(freq, reverb);
+                
+                // Add some random high harmonics
+                if (Math.random() > 0.6) {
+                    createRandomHarmonic(freq * 2, reverb);
+                }
+            });
+            
+            // Add some random note changes
+            setInterval(() => {
+                const randFreq = baseNotes[Math.floor(Math.random() * baseNotes.length)];
+                createRandomHarmonic(randFreq, reverb);
+            }, 5000);
+        }
+        
+        function createDrone(frequency, destination) {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.value = frequency;
+            
+            // Add slight random detuning for chorus effect
+            osc.detune.value = Math.random() * 10 - 5;
+            
+            gain.gain.value = 0;
+            
+            osc.connect(gain);
+            gain.connect(destination);
+            
+            osc.start();
+            
+            // Fade in
+            gain.gain.setValueAtTime(0, audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(0.1 / (frequency / 220), audioContext.currentTime + 2);
+            
+            oscillators.push(osc);
+            gainNodes.push(gain);
+            
+            return { osc, gain };
+        }
+        
+        function createRandomHarmonic(baseFreq, destination) {
+            const { osc, gain } = createDrone(baseFreq + (Math.random() * 10 - 5), destination);
+            
+            // Random envelope
+            const attackTime = 0.5 + Math.random() * 2;
+            const releaseTime = 3 + Math.random() * 5;
+            
+            gain.gain.setValueAtTime(0, audioContext.currentTime);
+            gain.gain.linearRampToValueAtTime(0.05, audioContext.currentTime + attackTime);
+            gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + attackTime + releaseTime);
+            
+            // Remove the oscillator after it fades out
+            setTimeout(() => {
+                const index = oscillators.indexOf(osc);
+                if (index > -1) {
+                    oscillators.splice(index, 1);
+                    gainNodes.splice(index, 1);
+                }
+                osc.stop();
+            }, (attackTime + releaseTime) * 1000);
+        }
+    </script>
+</body>
+</html>
