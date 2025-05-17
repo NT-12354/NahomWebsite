@@ -764,19 +764,33 @@ img {
     text-align: center;
 }
 
-.audio-selection button {
+.audio-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.audio-link {
+    display: inline-block;
     background-color: var(--accent-color);
     color: var(--light-color);
-    border: none;
+    text-decoration: none;
     padding: 8px 12px;
-    margin: 5px;
     border-radius: 3px;
-    cursor: pointer;
     transition: background-color var(--transition-fast);
 }
 
-.audio-selection button:hover {
+.audio-link:hover {
     background-color: var(--primary-color);
+    color: var(--light-color);
+}
+
+.audio-note {
+    font-size: 0.9rem;
+    color: var(--gray-color);
+    font-style: italic;
 }
 
 .gallery-filter {
